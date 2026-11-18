@@ -1,0 +1,46 @@
+Kali Linux VM (QEMU/KVM) — No Internet Fix
+Root Causes
+Two issues combined to break networking:
+
+UFW's routed/forward policy was DROP, blocking VM traffic from being forwarded
+vnet2 (the VM's tap interface) was not attached to virbr0 (the NAT bridge), so packets never reached dnsmasq
+
+
+
+Fix 1 — Allow UFW to forward traffic (Host, VM off or on)
+bash# Allow virbr0 traffic through UFW
+sudo ufw allow in on virbr0
+sudo ufw allow out on virbr0
+sudo ufw route allow in on virbr0
+sudo ufw route allow out on virbr0
+
+# Change UFW's default forward policy from DROP to ACCEPT
+sudo sed -i 's/DEFAULT_FORWARD_POLICY="DROP"/DEFAULT_FORWARD_POLICY="ACCEPT"/' /etc/default/ufw
+sudo ufw reload
+
+
+
+Fix 2 — Restart the libvirt default network (Host, VM off or on)
+bashsudo virsh net-destroy default
+sudo virsh net-start default
+
+
+
+Fix 3 — Attach the tap interface to the bridge (Host, VM ON)
+After booting the VM, if it still doesn't get an IP, check if the tap is bridged:
+bashbridge link show   # vnet* should appear here under virbr0
+If it's missing:
+bashsudo ip link set vnet2 master virbr0  # replace vnet2 with your actual tap name
+
+Fix 4 — Trigger DHCP inside Kali (VM ON)
+bashsudo systemctl restart NetworkManager
+sleep 5
+ip a show eth0   # should show 192.168.122.x
+ping -c 3 8.8.8.8
+
+
+Notes
+
+Fix 1 and Fix 2 are permanent — survive reboots
+Fix 3 (tap bridging) may need to be reapplied each VM boot if libvirt doesn't auto-attach. Running virsh net-destroy default && virsh net-start default right after booting the VM usually handles it
+Your VM name is linux2024, tap interface is vnet2

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# usage: mkm3u <folder relative to ~/Music> [playlist name]
+# set DEPTH=1 to ignore subfolders
+MUSIC="$HOME/Music"
+DIR="${1:-.}"
+NAME="${2:-$(basename "$DIR")}"
+[ "$NAME" = "." ] && NAME="all-music"
+
+cd "$MUSIC" || exit 1
+mkdir -p Playlists
+
+find "$DIR" ${DEPTH:+-maxdepth "$DEPTH"} -path ./Playlists -prune -o -type f \
+  \( -iname '*.flac' -o -iname '*.mp3' -o -iname '*.opus' -o -iname '*.m4a' -o -iname '*.ogg' -o -iname '*.wav' \) -print \
+  | sed 's|^\./||' | sort > "Playlists/$NAME.m3u"
+
+echo "Created Playlists/$NAME.m3u ($(wc -l < "Playlists/$NAME.m3u") songs)"

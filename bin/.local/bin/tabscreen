@@ -1,0 +1,4 @@
+#!/bin/sh
+adb shell settings put system pointer_speed -4
+SDL_VIDEODRIVER=wayland SDL_GRAB_KEYBOARD=1 \
+  scrcpy --mouse=uhid --keyboard=uhid "$@"

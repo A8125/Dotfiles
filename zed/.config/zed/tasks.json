@@ -1,0 +1,11 @@
+[
+  {
+    "label": "Run C/C++ file",
+    "command": "case \"$ZED_FILE\" in *.c) gcc -Wall -g \"$ZED_FILE\" -o \"/tmp/$ZED_STEM\" -lm ;; *.cpp|*.cc|*.cxx|*.C) g++ -std=c++20 -Wall -g \"$ZED_FILE\" -o \"/tmp/$ZED_STEM\" ;; *) echo \"Not a C/C++ file: $ZED_FILE\" >&2; exit 1 ;; esac && \"/tmp/$ZED_STEM\"",
+    "cwd": "$ZED_DIRNAME",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "save": "current"
+  }
+]

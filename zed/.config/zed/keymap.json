@@ -1,0 +1,15 @@
+// Zed keymap: https://zed.dev/docs/key-bindings
+[
+  {
+    "context": "Workspace",
+    "bindings": {
+      "f5": ["task::Spawn", { "task_name": "Run C/C++ file" }],
+      "shift-f5": "task::Rerun"
+    }
+  },
+  {
+    "bindings": {
+      "alt-q": "terminal_panel::ToggleFocus"
+    }
+  }
+]

@@ -1,0 +1,10 @@
+#!/bin/sh
+SRC="/sdcard/Laptop"
+OUT="$HOME/FromTablet"
+mkdir -p "$OUT"
+
+if adb pull "$SRC/." "$OUT/" >/dev/null 2>&1; then
+  notify-send "Pulled from tablet" "Saved to $OUT"
+else
+  notify-send -u critical "Pull FAILED" "Is the tablet connected? Does $SRC exist?"
+fi

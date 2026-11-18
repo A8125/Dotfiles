@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# One playlist per top-level folder in ~/Music
+MUSIC="$HOME/Music"
+OUT="$MUSIC/Playlists"
+mkdir -p "$OUT"
+cd "$MUSIC" || exit 1
+
+for d in */; do
+  d="${d%/}"
+  [ "$d" = "Playlists" ] && continue
+  find "$d" -type f \( -iname '*.flac' -o -iname '*.mp3' -o -iname '*.opus' -o -iname '*.m4a' -o -iname '*.ogg' -o -iname '*.wav' \) | sort -V > "$OUT/$d.m3u"
+  echo "$d: $(wc -l < "$OUT/$d.m3u") songs"
+done

@@ -1,0 +1,17 @@
+awww-git
+checkra1n-cli
+checkra1n-gui
+darkly-bin
+equibop-bin
+fabric-cli-git
+graphite-gtk-theme
+gray-git
+matugen-bin
+papirus-folders
+peaclock
+python-fabric-git
+qtengine
+sddm-silent-theme
+vesktop
+woeusb
+zapzap-bin
