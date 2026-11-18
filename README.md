@@ -9,11 +9,11 @@ Live files in `$HOME` are symlinks into this repo. Editing
 
 | Desktop | Overview |
 |---|---|
-| ![Niri desktop with fastfetch](assets/screenshots/Desktop.png) | ![Niri overview](assets/screenshots/overview.png) |
+| ![Niri desktop with fastfetch](assets/screenshots/Desktop.webp) | ![Niri overview](assets/screenshots/overview.webp) |
 
 btop, rmpc and cava running as a floating TUI stack:
 
-![btop and rmpc](assets/screenshots/btop-and-rmpc.png)
+![btop and rmpc](assets/screenshots/btop-and-rmpc.webp)
 
 ## Layout
 
