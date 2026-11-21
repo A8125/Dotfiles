@@ -33,7 +33,9 @@ cd ~/Projects/dots
 ### 2. Run the installer
 
 ```bash
-./install.sh
+./install.sh             # interactive profile menu
+./install.sh --minimal   # minimal profile, no menu
+./install.sh --full      # full profile, no menu
 ```
 
 The script first asks which profile to install:
@@ -53,37 +55,44 @@ Without a terminal on stdin the script defaults to Minimal automatically.
 | Profile | Packages | Stow packages | Use when |
 |---|---|---|---|
 | **Minimal** *(default)* | `pkglist-minimal.txt` | `zsh niri noctalia kitty fastfetch matugen pipewire` | Fresh machine, quick start |
-| **Full** | `pkglist.txt` + `pkglist-aur.txt` | All 23 stow packages | Complete setup matching this machine |
+| **Full** | `pkglist.txt` + `pkglist-aur.txt` | All 28 stow packages | Complete setup matching this machine |
 
 **Minimal** contains: niri, noctalia, kitty, fastfetch, chafa, matugen-bin,
 uwsm, pipewire stack, wl-clipboard, cliphist, polkit-gnome.
 
-Re-running `./install.sh` and selecting **Full** after a minimal install is safe — `--needed`
-skips already-installed packages and `stow` is idempotent.
+Re-running `./install.sh` (or `./install.sh --full`) after a minimal install is
+safe — `--needed` skips already-installed packages and `stow` is idempotent.
 
 Whatever profile runs, the script will:
 
-1. Run `sudo pacman -Syu --needed git base-devel stow zsh fastfetch chafa`
-   (full system upgrade — you can Ctrl-C at the prompt to abort).
+1. Run `sudo pacman -S --needed git base-devel stow zsh fastfetch chafa`.
+   It does **not** upgrade the system by default; pass `--upgrade` to run
+   `pacman -Syu` first (you can Ctrl-C at the prompt to abort).
 2. Install `paru` if it isn't already present (tries the CachyOS repo first,
    then builds from the AUR).
 3. Install the profile's package list with `paru`. Hardware-specific packages
    are skipped automatically (see [Hardware filtering](#hardware-filtering)
    below). A failing AUR build does **not** stop the rest.
-4. Move any conflicting files in `$HOME` to `<file>.pre-stow` (nothing is
-   deleted), then run `stow --no-folding -t ~` on the profile's stow packages.
-5. Copy `fastfetch/pngs/` images to `~/.config/fastfetch/pngs/`.
-6. Link any `*.toml` files found in the noctalia repo package into
-   `~/.config/noctalia/`.
-7. Optionally copy the 32 MB wallpaper set to `~/Pictures/Wallpapers`.
+4. Move any conflicting files or foreign symlinks in `$HOME` to
+   `<file>.pre-stow` (nothing is deleted, and existing backups are never
+   overwritten), then run `stow --no-folding -t ~` on the profile's stow
+   packages. If stow still hits a conflict it stops and says so.
+5. Link any `*.toml` files found in the noctalia repo package into
+   `~/.config/noctalia/`. This is a no-op today: the repo contains no TOML
+   files.
+6. Copy the 32 MB wallpaper set to `~/Pictures/Wallpapers` only if you ask for
+   it (`--wallpapers` or a `y` answer).
 
 | Flag | Effect |
 |---|---|
 | *(none)* | Interactive profile menu (default: Minimal) |
+| `--minimal` | Install the minimal profile without the menu |
+| `--full` | Install the full profile without the menu |
 | `--wallpapers` | Copy the 32 MB wallpaper set to `~/Pictures/Wallpapers`, no prompt |
 | `--no-wallpapers` | Skip wallpapers, no prompt |
 | `--system` | Also install `locale.conf`, `vconsole.conf` and `sddm.conf` into `/etc` |
 | `--all-packages` | Disable hardware filtering; install every package in the lists |
+| `--upgrade` | Run `pacman -Syu` (full system upgrade) before installing |
 | `--help` | Show usage |
 
 Flags can be combined, e.g. `./install.sh --system --no-wallpapers`.
@@ -97,11 +106,15 @@ volume/brightness, media keys, clipboard, screenshots) works.
 | Keybind | Program | Install with |
 |---|---|---|
 | `Mod+B` | firefox | Full profile |
-| `Mod+W` | librewolf | Full profile |
+| `Mod+W` | librewolf | not installed — see below |
 | `Mod+O` | obsidian | Full profile |
 | `Mod+M` | spotify-launcher | Full profile |
 | `Mod+E` | nemo (file manager) | Full profile |
 | `Ctrl+Shift+Space` | niri-animations picker (noctalia plugin) | Full profile |
+
+`librewolf` is not in `pkglist.txt` (it is missing from this machine's package
+snapshot), so `Mod+W` stays unbound after **either** profile. Install it
+manually with `paru -S librewolf` if you want the keybind to work.
 
 A few AUR packages are likely to break (`checkra1n-*`, `woeusb`, `gray-git`,
 `qtengine`, `peaclock`, `awww-git`, `python-fabric-git`, `fabric-cli-git`).
@@ -137,13 +150,16 @@ Logging in on **tty1** starts niri automatically (through `uwsm`, set up in
 - **Monitors:** run `niri msg outputs` and edit `~/.config/niri/cfg/display.kdl`
   (it currently has `eDP-1` and `DP-3`).
 - **Wallpaper:** pick one in Noctalia so matugen generates the theme colors.
-- **fastfetch logo:** the logo images (`pngs/*.png`) must be copied into the
-  repo at `fastfetch/.config/fastfetch/pngs/` — they are not tracked because of
-  their size. If the files are missing, the script will warn you with the exact
-  path where they should be placed.
-- **Noctalia TOML:** if you add a `*.toml` file to `noctalia/.config/noctalia/`
-  or directly to `noctalia/`, the installer will ensure it is symlinked into
-  `~/.config/noctalia/` automatically.
+  If you skipped the wallpaper copy, put your own images in
+  `~/Pictures/Wallpapers` (or change `wallpaper.directory` in
+  `~/.config/noctalia/settings.json`) — matugen and Noctalia need a wallpaper
+  directory to work.
+- **fastfetch logo:** `fastfetch/.config/fastfetch/pngs/` is tracked and
+  stowed like every other file, so the images appear in
+  `~/.config/fastfetch/pngs/` automatically.
+- **Noctalia TOML:** the repo currently has no `*.toml` files. If you add one
+  to `noctalia/.config/noctalia/` (or directly to `noctalia/`), the installer
+  ensures it is symlinked into `~/.config/noctalia/`.
 - **Accounts:** `gh auth login`, and recreate your SSH and GPG keys. They are
   never tracked.
 - **Services:** the lists are in `services-system.txt` and `services-user.txt`.

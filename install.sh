@@ -2,10 +2,13 @@
 # Rebuild this setup on a fresh Arch/CachyOS machine.
 # Usage:
 #   ./install.sh                  # interactive profile menu + stow
+#   ./install.sh --minimal        # minimal profile, no menu
+#   ./install.sh --full           # full profile, no menu
 #   ./install.sh --wallpapers     # also copy wallpapers, no prompt
 #   ./install.sh --no-wallpapers  # skip wallpapers, no prompt
 #   ./install.sh --system         # also install locale/vconsole/sddm configs (needs sudo)
 #   ./install.sh --all-packages   # skip hardware filtering (install everything)
+#   ./install.sh --upgrade        # run pacman -Syu (full system upgrade) first
 #   ./install.sh --help           # show this message
 
 # ---------------------------------------------------------------------------
@@ -15,7 +18,8 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SYSTEM=0
 WALLPAPERS=""    # empty = ask, yes = copy, no/skipped = skip
 ALL_PACKAGES=0
-PROFILE=""       # set by interactive menu
+UPGRADE=0        # 1 = run pacman -Syu before installing
+PROFILE=""       # set by interactive menu or --minimal / --full
 
 # Stow package lists
 FULL_PACKAGES=(
@@ -38,12 +42,15 @@ Usage: ./install.sh [OPTION]...
 
   --system          also install locale.conf, vconsole.conf and sddm.conf
                     into /etc/ (needs sudo)
+  --minimal         install the minimal profile without the menu
+  --full            install the full profile without the menu
   --wallpapers      copy the 32 MB wallpaper set to ~/Pictures/Wallpapers
   --no-wallpapers   skip wallpapers without asking
   --all-packages    skip hardware filtering; install every package in the lists
+  --upgrade         run pacman -Syu (full system upgrade) before installing
   -h, --help        show this help and exit
 
-Flags can be combined, e.g. ./install.sh --system --no-wallpapers
+Flags can be combined, e.g. ./install.sh --full --system --no-wallpapers
 EOF
 }
 
@@ -52,9 +59,12 @@ parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --system)        SYSTEM=1 ;;
+      --minimal)       PROFILE=minimal ;;
+      --full)          PROFILE=full ;;
       --wallpapers)    WALLPAPERS=yes ;;
       --no-wallpapers) WALLPAPERS=no ;;
       --all-packages)  ALL_PACKAGES=1 ;;
+      --upgrade)       UPGRADE=1 ;;
       -h|--help)       usage; exit 0 ;;
       *)               usage >&2; exit 1 ;;
     esac
@@ -124,8 +134,14 @@ apply_profile() {
 # FIX 2a – Bootstrap: ensure git, base-devel, stow, zsh, fastfetch, chafa
 # ---------------------------------------------------------------------------
 bootstrap_pacman() {
-  echo "NOTE: Running pacman -Syu — this is a full system upgrade; you can Ctrl-C now to abort."
-  sudo pacman -Syu --needed git base-devel stow zsh fastfetch chafa
+  if [[ "$UPGRADE" -eq 1 ]]; then
+    echo "NOTE: Running pacman -Syu — this is a full system upgrade; you can Ctrl-C now to abort."
+    sudo pacman -Syu --needed git base-devel stow zsh fastfetch chafa
+  else
+    # No system upgrade by default: -Syu can fail on stale mirrors/keyrings and
+    # would abort a plain re-stow. Use --upgrade to opt in.
+    sudo pacman -S --needed git base-devel stow zsh fastfetch chafa
+  fi
 }
 
 # ---------------------------------------------------------------------------
@@ -144,7 +160,8 @@ install_paru() {
   local tmpdir
   tmpdir="$(mktemp -d)"
   git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
-  ( cd "$tmpdir/paru" && makepkg -si )
+  # `|| echo` keeps set -e from aborting before the error message is printed.
+  ( cd "$tmpdir/paru" && makepkg -si ) || echo "WARNING: makepkg failed; see the build errors above."
   rm -rf "$tmpdir"
   if ! command -v paru >/dev/null 2>&1; then
     echo "ERROR: paru build failed. Install it manually and re-run." >&2
@@ -291,10 +308,10 @@ install_packages() {
   local aur_failed=()
   if [[ "${#active_aur_pkgs[@]}" -gt 0 ]]; then
     echo "Installing ${#active_aur_pkgs[@]} AUR packages…"
-    if ! paru -S --needed "${active_aur_pkgs[@]}" 2>/dev/null; then
+    if ! paru -S --needed "${active_aur_pkgs[@]}"; then
       echo "Batch AUR install failed; retrying one at a time…"
       for pkg in "${active_aur_pkgs[@]}"; do
-        if ! paru -S --needed "$pkg" 2>/dev/null; then
+        if ! paru -S --needed "$pkg"; then
           echo "  WARNING: AUR package '$pkg' failed to build"
           aur_failed+=("$pkg")
         fi
@@ -329,16 +346,48 @@ install_packages() {
 # ---------------------------------------------------------------------------
 # Conflict handling (FIX: safe under set -euo pipefail)
 # ---------------------------------------------------------------------------
+# Return a .pre-stow path that does not overwrite an earlier backup.
+backup_path() {
+  local base="$1.pre-stow" candidate="$1.pre-stow" n=1
+  while [[ -e "$candidate" || -L "$candidate" ]]; do
+    candidate="$base.$n"
+    (( n++ )) || true
+  done
+  printf '%s\n' "$candidate"
+}
+
 move_conflicts() {
-  local pkg
+  local pkg f rel t real backup
   for pkg in "${PACKAGES[@]}"; do
-    [[ -d "$REPO/$pkg" ]] || continue   # FIX 2e guard
+    [[ -d "$REPO/$pkg" ]] || continue
     while IFS= read -r f; do
-      local rel="${f#*/}"
-      local t="$HOME/$rel"
-      if [[ -e "$t" ]] && [[ ! -L "$t" ]]; then
-        mv "$t" "$t.pre-stow"
-        echo "  moved $t → $t.pre-stow"
+      # find returns absolute paths: strip the repo/package prefix, not just the
+      # first slash (the old ${f#*/} produced $HOME/home/user/...).
+      rel="${f#"$REPO/$pkg/"}"
+      t="$HOME/$rel"
+
+      # Never touch a target that resolves back into the repo. Otherwise, when a
+      # parent in $HOME is a symlink into this repo, the mv below would rename
+      # tracked files instead of user configs.
+      if [[ -e "$t" ]]; then
+        real="$(realpath "$t" 2>/dev/null || true)"
+        case "$real" in
+          "$REPO"|"$REPO"/*) continue ;;
+        esac
+      fi
+
+      if [[ -e "$t" && ! -L "$t" ]]; then
+        backup="$(backup_path "$t")"
+        mv "$t" "$backup"
+        echo "  moved $t → $backup"
+      elif [[ -L "$t" ]]; then
+        # Leave stow's own links in place; move a hand-made link elsewhere.
+        real="$(realpath "$t" 2>/dev/null || true)"
+        if [[ "$real" != "$f" ]]; then
+          backup="$(backup_path "$t")"
+          mv "$t" "$backup"
+          echo "  moved foreign symlink $t → $backup"
+        fi
       fi
     done < <(find "$REPO/$pkg" -type f)
   done
@@ -364,7 +413,11 @@ stow_packages() {
   fi
 
   if [[ "${#to_stow[@]}" -gt 0 ]]; then
-    stow --no-folding -v -t "$HOME" "${to_stow[@]}"
+    if ! stow --no-folding -v -t "$HOME" "${to_stow[@]}"; then
+      echo "ERROR: stow could not link some files (conflicts are listed above)." >&2
+      echo "       Nothing was deleted. Fix the conflicts and re-run ./install.sh." >&2
+      return 1
+    fi
   fi
 }
 
@@ -381,14 +434,10 @@ setup_fastfetch() {
   command -v chafa >/dev/null 2>&1 || \
     echo "WARNING: chafa not found; fastfetch kitty-logo rendering needs chafa"
 
-  # Copy pngs from the repo into ~/.config/fastfetch/pngs/
+  # pngs/ is tracked and linked by stow like every other file; do not copy it
+  # here or the copy lands on top of stow's symlinks and aborts the next run.
   local repo_pngs="$REPO/fastfetch/.config/fastfetch/pngs"
-  local user_pngs="$HOME/.config/fastfetch/pngs"
-  if [[ -d "$repo_pngs" ]]; then
-    mkdir -p "$user_pngs"
-    cp -a "$repo_pngs/." "$user_pngs/"
-    echo "fastfetch: copied pngs to $user_pngs"
-  else
+  if [[ ! -d "$repo_pngs" ]]; then
     echo "WARNING: fastfetch pngs directory not found in repo ($repo_pngs)"
   fi
 
@@ -633,7 +682,7 @@ EOF
   zsh_path="$(command -v zsh 2>/dev/null || true)"
   if [[ -n "$zsh_path" ]]; then
     local login_shell
-    login_shell="$(getent passwd "$USER" 2>/dev/null | cut -d: -f7 || true)"
+    login_shell="$(getent passwd "${USER:-$(id -un)}" 2>/dev/null | cut -d: -f7 || true)"
     if [[ "$login_shell" != "$zsh_path" ]]; then
       echo ""
       echo "Your login shell is not zsh. To change it run:"
@@ -650,11 +699,13 @@ main() {
 
   parse_args "$@"
 
-  # 1. Select and apply install profile
-  select_profile
+  # 1. Select and apply install profile (flag skips the menu)
+  if [[ -z "$PROFILE" ]]; then
+    select_profile
+  fi
   apply_profile
 
-  # 2. Bootstrap base tools (Syu + essentials)
+  # 2. Bootstrap base tools (no full upgrade unless --upgrade)
   bootstrap_pacman
 
   # 3. Install paru
