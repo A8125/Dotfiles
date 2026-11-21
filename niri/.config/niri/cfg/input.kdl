@@ -1,10 +1,13 @@
-// ────────────── Input Configuration ──────────────
-// https://github.com/YaLTeR/niri/wiki/Configuration:-Input
+// =============================================================================
+// Niri Input Device Configuration
+// =============================================================================
+// Keyboard layout, touchpad gestures, mouse sensitivity, and focus behavior.
+// Documentation: https://github.com/YaLTeR/niri/wiki/Configuration:-Input
 
 input {
     keyboard {
         xkb {
-            //If you want to overwrite your keyboard layout,
+            // If you want to overwrite your keyboard layout,
             // uncomment the line below and change the layout accordingly.
             //layout "us" // Use the American keyboard layout
         }
@@ -15,7 +18,7 @@ input {
         tap // Enable tap-to-click
         natural-scroll // Enable natural (macOS-style) scrolling
         scroll-factor 0.3;
-        dwt
+        dwt // Disable touchpad while typing
     }
 
     mouse {

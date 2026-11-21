@@ -1,27 +1,39 @@
-    prefer-no-csd
-    screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+// =============================================================================
+// Niri Miscellaneous & Environment Configuration
+// =============================================================================
+// Global preferences, environment variables, cursor settings, and debug options.
+// Documentation: https://github.com/YaLTeR/niri/wiki/Configuration:-Miscellaneous
 
-    environment {
-        ELECTRON_OZONE_PLATFORM_HINT "auto"
-        QT_QPA_PLATFORM "wayland"
-        QT_QPA_PLATFORMTHEME "gtk3"
-        QT_QPA_PLATFORMTHEME "qt6ct"
-        QT_WAYLAND_DISABLE_WINDOWDECORATION "1"
-        XDG_CURRENT_DESKTOP "niri"
-        XDG_SESSION_TYPE "wayland"
+// Ask Wayland clients to omit client-side window titlebars and borders
+prefer-no-csd
 
-    }
+// File path template for saved screenshots
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 
-   cursor {
+// Environment variables exported to processes spawned by niri
+environment {
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+    QT_QPA_PLATFORM "wayland"
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+    QT_WAYLAND_DISABLE_WINDOWDECORATION "1"
+    XDG_CURRENT_DESKTOP "niri"
+    XDG_SESSION_TYPE "wayland"
+}
+
+// Default cursor theme and size
+cursor {
     xcursor-theme "Adwaita"
     xcursor-size 24
 }
-    debug {
-        // Allows notification actions and window activation from Noctalia.
-        honor-xdg-activation-with-invalid-serial
-        render-drm-device "/dev/dri/cad1"
-    }
 
-    hotkey-overlay {
-       skip-at-startup
-    }
+debug {
+    // Allows notification actions and window activation from Noctalia
+    honor-xdg-activation-with-invalid-serial
+    render-drm-device "/dev/dri/cad1"
+}
+
+// Hotkey overlay settings
+hotkey-overlay {
+    skip-at-startup
+}

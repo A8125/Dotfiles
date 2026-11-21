@@ -1,5 +1,14 @@
+// =============================================================================
+// Niri Master Configuration
+// =============================================================================
+// This is the top-level configuration file that includes modular configurations
+// from cfg/ as well as animation and theme definitions.
+
+// Window animations (CRT shader effects and Noctalia integration)
 include "./cfg/animation.kdl"
 include "./animations.kdl"
+
+// Core configuration modules
 include "./cfg/autostart.kdl"
 include "./cfg/keybinds.kdl"
 include "./cfg/input.kdl"
@@ -8,6 +17,8 @@ include "./cfg/layout.kdl"
 include "./cfg/rules.kdl"
 include "./cfg/misc.kdl"
 
+// Noctalia shell theme and UI overrides
 include "./noctalia.kdl"
 
+// Client-Side Decorations: ask Wayland clients to omit window titlebars/borders
 prefer-no-csd

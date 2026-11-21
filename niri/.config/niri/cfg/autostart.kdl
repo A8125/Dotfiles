@@ -1,8 +1,18 @@
-// ────────────── Startup Applications ──────────────
-// https://github.com/YaLTeR/niri/wiki/Configuration:-Miscellaneous#spawn-sh-at-startup
+// =============================================================================
+// Niri Startup Applications
+// =============================================================================
+// Background daemons and applications launched when niri starts.
+// Documentation: https://github.com/YaLTeR/niri/wiki/Configuration:-Miscellaneous#spawn-sh-at-startup
 
-    //spawn-sh-at-startup "qs -c noctalia-shell"
-    spawn-at-startup "wl-paste" "--type" "text" "--watch" "cliphist" "store"
+// Noctalia shell daemon (quick-shell / custom shell launcher)
+//spawn-sh-at-startup "qs -c noctalia-shell"
+
+// Clipboard history: watch Wayland clipboard for text and images using cliphist
+spawn-at-startup "wl-paste" "--type" "text" "--watch" "cliphist" "store"
 spawn-at-startup "wl-paste" "--type" "image" "--watch" "cliphist" "store"
+
+// Polkit authentication agent for privileged GUI dialogs
 spawn-at-startup "/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1"
+
+// Noctalia desktop bar and widget shell
 spawn-at-startup "noctalia"

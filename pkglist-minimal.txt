@@ -1,0 +1,41 @@
+# pkglist-minimal.txt
+# Packages installed by ./install.sh --minimal
+# Provides a working niri + noctalia + kitty + fastfetch desktop out of the box.
+# Run ./install.sh --full later to add all remaining packages.
+#
+# Names must exist in pkglist.txt (repo) or pkglist-aur.txt (AUR).
+# Hardware filtering still applies (nvidia/intel/asus packages auto-skipped).
+
+# ── Wayland compositor ────────────────────────────────────────────────────────
+niri
+
+# ── Desktop shell / bar / launcher / lock / notifications ────────────────────
+noctalia
+
+# ── Terminal emulator (Mod+Q keybind) ────────────────────────────────────────
+kitty
+
+# ── System fetch ──────────────────────────────────────────────────────────────
+fastfetch
+# chafa: kitty-protocol image rendering in fastfetch.
+# Note: chafa is also bootstrapped by install.sh bootstrap_pacman() directly.
+
+# ── Color theming (noctalia has niri+kitty templates active) ──────────────────
+# generates ~/.config/matugen/generated/ on wallpaper change
+matugen-bin
+
+# ── Niri session launcher (used in .zshrc: uwsm start niri.desktop) ───────────
+uwsm
+
+# ── Audio stack (noctalia volume / media controls) ───────────────────────────
+pipewire
+pipewire-audio
+pipewire-pulse
+wireplumber
+
+# ── Clipboard daemon (autostart: wl-paste | cliphist store) ──────────────────
+wl-clipboard
+cliphist
+
+# ── Polkit agent (autostart: polkit-gnome; noctalia polkit-agent plugin) ─────
+polkit-gnome

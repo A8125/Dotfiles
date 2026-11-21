@@ -1,48 +1,62 @@
-    window-rule {
-        geometry-corner-radius 20 // Set every window radius to 20
-        clip-to-geometry true
-	draw-border-with-background false
-	opacity 0.9
-	background-effect {
-		blur false
-		xray true
-	}
-    }
+// =============================================================================
+// Niri Window and Layer Rules
+// =============================================================================
+// Window styling, placement, floating modes, and layer-shell rules.
+// Order matters: rules are evaluated in top-to-bottom sequence.
+// Documentation: https://github.com/YaLTeR/niri/wiki/Configuration:-Window-Rules
+//                https://github.com/YaLTeR/niri/wiki/Configuration:-Layer-Rules
 
-     // if you use steam you will probably like these
-    window-rule {
-        match app-id="steam"
-        exclude title=r#"^[Ss]team$"#
-        open-floating true
+// ---- Global Window Styling --------------------------------------------------
+window-rule {
+    geometry-corner-radius 20 // Set every window radius to 20
+    clip-to-geometry true
+    draw-border-with-background false
+    opacity 0.85
+    background-effect {
+        blur true
+        xray true
     }
+}
 
-    window-rule {
+// ---- Steam Dialog Rules -----------------------------------------------------
+// Open auxiliary Steam windows floating (exclude main window)
+window-rule {
+    match app-id="steam"
+    exclude title=r#"^[Ss]team$"#
+    open-floating true
+}
+
+// Zen Browser rule
+window-rule {
     match app-id="^zen$"
     open-maximized true
-     background-effect {
+    opacity 0.9
+    background-effect {
         blur true
         xray false
     }
 }
 
-    window-rule {
-       match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
-       default-floating-position x=10 y=10 relative-to="bottom-right"
-       open-focused false
-    }
+// Steam toast notification rule
+window-rule {
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+    open-focused false
+}
 
+// ---- Layer Rules (Noctalia & skwd wallpaper layers) -------------------------
+layer-rule {
+    match namespace="^noctalia-wallpaper*"
+    place-within-backdrop true
+}
 
-    layer-rule {
-        match namespace="^noctalia-wallpaper*"
-        place-within-backdrop true
-    }
+layer-rule {
+    match namespace="^skwd-paper-backdrop$"
+    place-within-backdrop true
+}
 
-    layer-rule {
-        match namespace="^skwd-paper-backdrop$"
-        place-within-backdrop true
-    }
-
-    window-rule {
+// Kitty terminal rule
+window-rule {
     match app-id="kitty"
     draw-border-with-background false
     opacity 1.0
@@ -53,13 +67,26 @@ layer-rule {
     place-within-backdrop true
 }
 
+// Commented-out rule for scrcpy
 //window-rule {
     //match app-id="scrcpy"
     //open-on-output "Virtual-1"
     //open-fullscreen true
 //}
 
+// Mornye app rule
 window-rule {
     match app-id="com.zarz.mornye"
+    //opacity 1.0
+}
+
+// LibreWolf browser rule
+window-rule {
+    match app-id="librewolf"
+    open-maximized true
     opacity 1.0
+    background-effect {
+        blur true
+        xray false
+    }
 }

@@ -1,17 +1,19 @@
-// ────────────── Output Configuration ──────────────
-// You can run `niri msg outputs` to get the correct name for your displays.
-// You will have to remove "/-" and edit it before it takes effect.
-// https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
+// =============================================================================
+// Niri Display / Output Configuration
+// =============================================================================
+// Configure monitor resolution, position, scale, and refresh rates.
+// Run `niri msg outputs` to inspect connected monitors and available modes.
+// Documentation: https://github.com/YaLTeR/niri/wiki/Configuration:-Outputs
 
+// Internal laptop display
 output "eDP-1" {
     variable-refresh-rate
     scale 1.15
 }
 
+// External monitor (1080p @ 180Hz)
 output "DP-3" {
     mode "1920x1080@180"
     variable-refresh-rate
     scale 1.0
 }
-
-

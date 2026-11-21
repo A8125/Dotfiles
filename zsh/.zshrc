@@ -209,3 +209,7 @@ for f in $HOME/.config/zsh/{aliases,functions,secrets}.zsh(N); do source "$f"; d
 # =============================================================================
 # End of ~/.zshrc
 # =============================================================================
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/flickowens/.local/bin:$PATH"
